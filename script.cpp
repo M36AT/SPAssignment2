@@ -110,7 +110,83 @@ void rainfallAnalysis() {
     outFile.close();
 }
 
+struct WeatherData {
+    string district;
+    int year;
+    double avgTemp;
+};
+
+void climateChangeImpact() {
+    ifstream file("Weather_Statistics.txt");
+    ofstream report("ClimateImpact_Report.txt");
+
+    if (!file.is_open()) {
+        cout << "Error: Cannot open Weather_Statistics.txt\n";
+        return;
+    }
+
+    if (!report.is_open()) {
+        cout << "Error: Cannot create ClimateImpact_Report.txt\n";
+        return;
+    }
+
+    WeatherData data[500]; 
+    int count = 0;
+
+    string line;
+    getline(file, line);
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string state, district, yearStr, tempRange, rainfall, humidity;
+
+        getline(ss, state, ',');
+        getline(ss, district, ',');
+        getline(ss, yearStr, ',');
+        getline(ss, tempRange, ',');
+        getline(ss, rainfall, ',');
+        getline(ss, humidity, ',');
+
+        int year = stoi(yearStr);
+        int dashPos = tempRange.find('-');
+        double minT = stod(tempRange.substr(0, dashPos));
+        double maxT = stod(tempRange.substr(dashPos + 1));
+        double avgT = (minT + maxT) / 2.0;
+        data[count].district = district;
+        data[count].year = year;
+        data[count].avgTemp = avgT;
+
+        count++;
+    }
+
+    report << "===== CLIMATE CHANGE IMPACT REPORT =====\n\n";
+    for (int i = 0; i < count; i++) {
+        for (int j = i + 1; j < count; j++) {
+
+            // Only compare same district
+            if (data[i].district == data[j].district) {
+
+                double diff = data[j].avgTemp - data[i].avgTemp;
+                
+                if (abs(diff) >= 2.0) {
+                    report << "District: " << data[i].district << "\n";
+                    report << "From Year " << data[i].year 
+                           << " to " << data[j].year << "\n";
+                    report << "Temperature change: " << diff << "°C\n";
+                    report << "---------------------------------\n";
+                }
+            }
+        }
+    }
+
+    cout << "Climate Change Impact report created: ClimateImpact_Report.txt\n";
+
+    file.close();
+    report.close();
+}
+
 int main() {
     rainfallAnalysis();
     return 0;
 }
+
