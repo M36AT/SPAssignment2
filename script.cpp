@@ -9,7 +9,19 @@ using namespace std;
 struct DistrictData {
     string name;
     double totalRainfall;
+    int count;
+};
+
+struct DistrictData {
+    string name;
+    double totalRainfall;
     int count;
+};
+
+struct WeatherData {
+    string district;
+    int year;
+    double avgTemp;
 };
 
 // Trim whitespace
@@ -18,6 +30,40 @@ string trim(const string& str) {
     if (first == string::npos) return "";
     size_t last = str.find_last_not_of(" \t\r\n");
     return str.substr(first, (last - first + 1));
+}
+
+void temperatureTrends() {
+    ifstream infile("Weather_Statistics.txt");
+    ofstream highfile("High_Temp.txt");
+    ofstream lowfile("Low_Temp.txt");
+    
+    string state, district;
+    int year;
+    double temp, rainfall, humidity;
+    
+    // Headers
+    highfile << "State District Year Temperature Rainfall Humidity\n";
+    lowfile << "State District Year Temperature Rainfall Humidity\n";
+    
+    string header;
+    getline(infile, header);
+    
+    while(infile >> state >> district >> year >> temp >> rainfall >> humidity) {
+        if (temp > 30.0) {
+            highfile << state << " " << district << " " << year << " " << temp << " " << rainfall << " " << humidity << "\n"; }
+		else{
+			lowfile << state << " " << district << " " << year << " " << temp << " " << rainfall << humidity << "\n";
+			
+		}
+	}
+	
+	infile.close();
+	highfile.close();
+	lowfile.close();
+	
+	cout << "Temperature analysis done! Check High_Temp.txt and Low_Temp.txt.\n";
+	
+	return 0;
 }
 
 void rainfallAnalysis() {
@@ -110,7 +156,89 @@ void rainfallAnalysis() {
     outFile.close();
 }
 
+void climateChangeImpact() {
+    ifstream file("Weather_Statistics.txt");
+    ofstream report("ClimateImpact_Report.txt");
+
+    if (!file.is_open()) {
+        cout << "Error: Cannot open Weather_Statistics.txt\n";
+        return;
+    }
+
+    if (!report.is_open()) {
+        cout << "Error: Cannot create ClimateImpact_Report.txt\n";
+        return;
+    }
+
+    WeatherData data[500];  // Beginner friendly fixed-size array
+    int count = 0;
+
+    string line;
+    getline(file, line); // Skip header
+
+    // Read data from file
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string state, district, yearStr, tempRange, rainfall, humidity;
+
+        getline(ss, state, ',');
+        getline(ss, district, ',');
+        getline(ss, yearStr, ',');
+        getline(ss, tempRange, ',');
+        getline(ss, rainfall, ',');
+        getline(ss, humidity, ',');
+
+        // Convert year
+        int year = stoi(yearStr);
+
+        // Extract temperature range (e.g. "25-30")
+        int dashPos = tempRange.find('-');
+        double minT = stod(tempRange.substr(0, dashPos));
+        double maxT = stod(tempRange.substr(dashPos + 1));
+
+        double avgT = (minT + maxT) / 2.0;
+
+        // Store into array
+        data[count].district = district;
+        data[count].year = year;
+        data[count].avgTemp = avgT;
+
+        count++;
+    }
+
+    // Write report header
+    report << "===== CLIMATE CHANGE IMPACT REPORT =====\n\n";
+
+    // Compare each pair of records
+    for (int i = 0; i < count; i++) {
+        for (int j = i + 1; j < count; j++) {
+
+            // Only compare same district
+            if (data[i].district == data[j].district) {
+
+                // Compare year-to-year temperature
+                double diff = data[j].avgTemp - data[i].avgTemp;
+
+                // Check if change is 2°C or more
+                if (abs(diff) >= 2.0) {
+                    report << "District: " << data[i].district << "\n";
+                    report << "From Year " << data[i].year 
+                           << " to " << data[j].year << "\n";
+                    report << "Temperature change: " << diff << "°C\n";
+                    report << "---------------------------------\n";
+                }
+            }
+        }
+    }
+
+    cout << "Climate Change Impact report created: ClimateImpact_Report.txt\n";
+
+    file.close();
+    report.close();
+}
+
 int main() {
     rainfallAnalysis();
     return 0;
 }
+
